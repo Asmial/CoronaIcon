@@ -1,83 +1,87 @@
 import time
+from spaindata import spaindata
 from datetime import timedelta
 import wx
 import wx.adv
+import wx.aui
 from PIL import ImageFont, Image, ImageDraw
 from timeloop import Timeloop
-import pandas as pd
-import numpy as np
 
+sd = spaindata()
+tm = Timeloop()
 
+class CoronaTracker (wx.Frame):
 
-class coronaMonitor(wx.Frame):
-    def __init__(self, parent, title):
-        super().__init__(parent, title=title)
-        self.Bind(wx.EVT_ICONIZE, self.nope)
-        self.Show()
-        self.Iconize()
+    def __init__(self, parent):
+        wx.Frame.__init__(self, parent, id=wx.ID_ANY, title=wx.EmptyString, pos=wx.DefaultPosition, size=wx.Size(
+            497, 500), style=wx.DEFAULT_FRAME_STYLE | wx.TAB_TRAVERSAL)
 
-    def nope(self, event):
-        if not self.IsIconized():
-            self.Iconize(True)
+        self.SetSizeHints(wx.DefaultSize, wx.DefaultSize)
 
-class data():
+        gbSizer1 = wx.GridBagSizer(0, 0)
+        gbSizer1.SetFlexibleDirection(wx.BOTH)
+        gbSizer1.SetNonFlexibleGrowMode(wx.FLEX_GROWMODE_ALL)
 
-    cod_iso = '''code,name
-AN,Andalucía
-AR,Aragón
-AS,"Asturias, Principado de"
-CN,Canarias
-CB,Cantabria
-CM,Castilla-La Mancha
-CL,Castilla y León
-CT,Catalunya (Cataluña)
-EX,Extremadura
-GA,Galicia (Galicia)
-IB,Illes Balears (Islas Baleares)
-RI,La Rioja
-MD,"Madrid, Comunidad de"
-MC,"Murcia, Región de"
-NC,"Navarra, Comunidad Foral de/Nafarroako Foru Komunitatea​"
-PV,País Vasco/Euskadi
-VC,"Valenciana, Comunidad/Valenciana, Comunitat​"
-'''
+        m_radioBox2Choices = sd.ccaa()
+        self.m_radioBox2 = wx.RadioBox(self, wx.ID_ANY, u"wxRadioBox", wx.DefaultPosition,
+                                        wx.DefaultSize, m_radioBox2Choices, 1, wx.RA_SPECIFY_COLS)
+        self.m_radioBox2.SetSelection(0)
+        gbSizer1.Add(self.m_radioBox2, wx.GBPosition(
+            0, 0), wx.GBSpan(4, 1), wx.ALL, 5)
 
-    def __init__(self):
-        self.update()
-        iso = pd.read_csv(self.cod_iso)
-        print(self.df.join(iso.set_index('code'),on='CCAA Codigo ISO'))
+        self.Casos_checkBox = wx.CheckBox(
+            self, wx.ID_ANY, u"Casos", wx.DefaultPosition, wx.DefaultSize, 0)
+        gbSizer1.Add(self.Casos_checkBox, wx.GBPosition(
+            0, 1), wx.GBSpan(1, 1), wx.ALL, 5)
 
-    
-    def update(self):
-        csv = pd.read_csv("https://covid19.isciii.es/resources/serie_historica_acumulados.csv",delimiter=',',encoding='cp1252')
-        df = pd.DataFrame.truncate(csv, after=len(csv) - 3)
-        df['Fecha'] = pd.to_datetime(df['Fecha'],dayfirst=True,format='%d/%m/%Y')
-        df['Casos '] = pd.to_numeric(df['Casos '])
-        df = df.groupby('CCAA Codigo ISO').max()
-        df = df.sort_values(by=['Casos '], ascending=False)
-        self.df = df
+        self.Fallecidos_checkBox = wx.CheckBox(
+            self, wx.ID_ANY, u"Fallecidos", wx.DefaultPosition, wx.DefaultSize, 0)
+        gbSizer1.Add(self.Fallecidos_checkBox, wx.GBPosition(
+            1, 1), wx.GBSpan(1, 1), wx.ALL, 5)
 
-class App():
-    num = 1
-    tm = Timeloop()
+        self.Recuperados_checkBox = wx.CheckBox(
+            self, wx.ID_ANY, u"Recuperados", wx.DefaultPosition, wx.DefaultSize, 0)
+        gbSizer1.Add(self.Recuperados_checkBox, wx.GBPosition(
+            2, 1), wx.GBSpan(1, 1), wx.ALL, 5)
+
+        gbSizer1.AddGrowableCol(0)
+
+        self.SetSizer(gbSizer1)
+        self.Layout()
+
+        self.Centre(wx.BOTH)
+
+    def __del__(self):
+        pass
+
+class CoronaIcon (wx.App):
 
     def __init__(self):
         super().__init__()
-        app = wx.App()
-        self.frame = coronaMonitor(None, 'hola!')
-        try:
-            self.tm.start(False)
-            self.app.MainLoop()
-        finally:
-            self.tm.stop()
+        self.frame = CoronaTracker(None)
     
-    @tm.job(interval=timedelta(seconds=5))
+    def start(self):
+        self.frame.SetIcon(wx.Icon('virus.png', wx.BITMAP_TYPE_PNG, -1, -1))
+        self.frame.Show()
+        self.MainLoop()
+    
     def updateIcon(self):
         img = Image.open("virus.png", 'r')
-        fnt = ImageFont.truetype('C:/Windows/Fonts/Impact.ttf', 120)
+        fnt = ImageFont.truetype('ImpactCondensed.ttf', 250)
         d = ImageDraw.Draw(img)
-        d.text((10, 10), str(num), font=fnt, fill='#ffffffff')
-        num += 1
+        d.text((0, 202), str(int(sd.gimme(self.frame.m_radioBox2.GetStringSelection(),'Casos '))), font=fnt, fill='#00ff00ff')
         img.save('ico.png')
-        frame.SetIcon(wx.Icon('ico.png', wx.BITMAP_TYPE_PNG, -1, -1))
+        self.frame.SetIcon(wx.Icon('ico.png', wx.BITMAP_TYPE_PNG, -1, -1))
 
+app = CoronaIcon()
+
+@tm.job(interval=timedelta(seconds=5))
+def reload():
+    app.updateIcon()
+
+def init():
+    tm.start(False)
+    app.start()
+    tm.stop()
+
+init()

@@ -1,3 +1,4 @@
+#Pandas
 import pandas as pd
 import numpy as np
 
@@ -22,5 +23,8 @@ class spaindata():
     def ccaa(self):
         return self.df.index.values
     
+    def cols(self):
+        return self.df.columns.values
+
     def gimme(self, index, data):
         return self.df[data][index]

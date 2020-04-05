@@ -14,12 +14,11 @@ import wx.aui
 # Pillow
 from PIL import ImageFont, Image, ImageDraw
 
-
 sd = spaindata()
 tm = Timeloop()
 
 
-class CoronaTracker (wx.Frame):
+class CoronaTracker(wx.Frame):
 
     def __init__(self, parent):
 
@@ -54,10 +53,13 @@ class CoronaTracker (wx.Frame):
         self.Centre(wx.BOTH)
 
         self.img = Image.open("virus.png", 'r')
-        self.CCAA_radioBox.Bind(wx.EVT_RADIOBOX, self.updateIcon)
-        self.dato_radioBox.Bind(wx.EVT_RADIOBOX, self.updateIcon)
+        self.CCAA_radioBox.Bind(wx.EVT_RADIOBOX, self.radioEvent)
+        self.dato_radioBox.Bind(wx.EVT_RADIOBOX, self.radioEvent)
 
-    def updateIcon(self, event):
+    def radioEvent(self, event):
+        self.updateIcon()
+
+    def updateIcon(self):
         frame = self
         img = self.img
 
@@ -67,17 +69,17 @@ class CoronaTracker (wx.Frame):
         border = (255, 255, 255, 128)
 
         data = Image.new('RGBA', img.size, color=(0, 0, 0, 0))
-        fnt = ImageFont.truetype('ImpactCondensed.ttf', 100)
+        fnt = ImageFont.truetype('ImpactCondensed.ttf', 125)
         d = ImageDraw.Draw(data)
         d.rectangle([(0, 150), (256, 256)], fill=back, outline=border, width=5)
-        d.text((5, 150), str(int(sd.gimme(CCAA, dato))), font=fnt, fill='white')
+        d.text((5, 132), str(int(sd.gimme(CCAA, dato))), font=fnt, fill='white')
         img = Image.alpha_composite(img, data)
         img.save('ico.png')
 
         frame.SetIcon(wx.Icon('ico.png', wx.BITMAP_TYPE_PNG, -1, -1))
 
     def start(self):
-        self.SetIcon(wx.Icon('virus.png', wx.BITMAP_TYPE_PNG, -1, -1))
+        self.updateIcon()
         self.Show()
 
     def __del__(self):
@@ -100,10 +102,12 @@ class CoronaIcon (wx.App):
 
 app = CoronaIcon()
 
+
 @tm.job(interval=timedelta(hours=1))
 def reload():
     sd.update()
     app.updateIcon()
+
 
 def main():
     tm.start(False)

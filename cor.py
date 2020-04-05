@@ -14,6 +14,9 @@ import wx.aui
 # Pillow
 from PIL import ImageFont, Image, ImageDraw
 
+#Resources
+from resource_path import resource_path
+
 sd = spaindata()
 tm = Timeloop()
 
@@ -52,7 +55,7 @@ class CoronaTracker(wx.Frame):
 
         self.Centre(wx.BOTH)
 
-        self.img = Image.open("virus.png", 'r')
+        self.img = Image.open(resource_path("virus.png"), 'r')
         self.CCAA_radioBox.Bind(wx.EVT_RADIOBOX, self.radioEvent)
         self.dato_radioBox.Bind(wx.EVT_RADIOBOX, self.radioEvent)
 
@@ -69,7 +72,7 @@ class CoronaTracker(wx.Frame):
         border = (255, 255, 255, 128)
 
         data = Image.new('RGBA', img.size, color=(0, 0, 0, 0))
-        fnt = ImageFont.truetype('ImpactCondensed.ttf', 125)
+        fnt = ImageFont.truetype(resource_path('ImpactCondensed.ttf'), 125)
         d = ImageDraw.Draw(data)
         d.rectangle([(0, 150), (256, 256)], fill=back, outline=border, width=5)
         d.text((5, 132), str(int(sd.gimme(CCAA, dato))), font=fnt, fill='white')

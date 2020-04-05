@@ -2,10 +2,12 @@
 import pandas as pd
 import numpy as np
 
+#Resources
+from resource_path import resource_path
 
 class spaindata():
     def __init__(self):
-        self.iso = pd.read_csv('isocodes.csv')
+        self.iso = pd.read_csv(resource_path('isocodes.csv'))
         self.update()
 
     def update(self):
